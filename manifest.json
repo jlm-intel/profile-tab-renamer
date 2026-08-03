@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Profile Tab Renamer",
+  "version": "1.0.0",
+  "description": "Customizes tab titles when visiting profile pages on Instagram, Facebook, and Threads.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "*://*.instagram.com/*",
+    "*://*.facebook.com/*",
+    "*://*.threads.net/*",
+    "*://*.threads.com/*"
+  ],
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.instagram.com/*",
+        "*://*.facebook.com/*",
+        "*://*.threads.net/*",
+        "*://*.threads.com/*"
+      ],
+      "js": ["src/content/index.ts"],
+      "run_at": "document_idle"
+    }
+  ]
+}
