@@ -25,7 +25,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 function applyTemplate(
   template: string,
-  info: ReturnType<typeof parseProfileInfo>,
+  info: Awaited<ReturnType<typeof parseProfileInfo>>,
 ): string {
   if (!info) return document.title;
 
@@ -35,13 +35,17 @@ function applyTemplate(
     .replace(/\{site\}/g, info.site);
 }
 
-function updateTabTitle() {
-  const info = parseProfileInfo();
-  if (info) {
+async function updateTabTitle() {
+  const info = await parseProfileInfo();
+
+  // Validate that info exists AND that essential fields are not empty
+  if (info && info.displayName.trim() !== "" && info.username.trim() !== "") {
     const newTitle = applyTemplate(currentTemplate, info);
+
     if (document.title !== newTitle) {
       isUpdatingTitle = true;
       document.title = newTitle;
+
       // Brief pause to ignore our own title change in MutationObserver
       setTimeout(() => {
         isUpdatingTitle = false;
@@ -49,7 +53,6 @@ function updateTabTitle() {
     }
   }
 }
-
 // Observe URL shifts and external DOM title rewrites
 let lastUrl = location.href;
 const observer = new MutationObserver(() => {
