@@ -1,5 +1,6 @@
 export interface TemplateOptions {
-  template: string; // e.g. "{displayName} ({username}) @ {site}"
+  template: string;
+  enableFacebook: boolean;
 }
 
 export interface ProfileInfo {
@@ -9,6 +10,7 @@ export interface ProfileInfo {
 }
 
 export const DEFAULT_TEMPLATE = "{displayName} ({username}) @ {site}";
+export const DEFAULT_ENABLE_FACEBOOK = false;
 
 // Template variables available to users:
 // {displayName} - e.g., "Your Kickstarter Sucks"

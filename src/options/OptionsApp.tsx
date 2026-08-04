@@ -1,36 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { DEFAULT_TEMPLATE } from "../types";
+import { DEFAULT_TEMPLATE, DEFAULT_ENABLE_FACEBOOK } from "../types";
 
 export const OptionsApp: React.FC = () => {
   const [template, setTemplate] = useState<string>(DEFAULT_TEMPLATE);
+  const [enableFacebook, setEnableFacebook] = useState<boolean>(
+    DEFAULT_ENABLE_FACEBOOK,
+  );
   const [savedStatus, setSavedStatus] = useState<boolean>(false);
 
   useEffect(() => {
-    chrome.storage.sync.get(["template"], (result) => {
-      if (result.template) {
+    chrome.storage.sync.get(["template", "enableFacebook"], (result) => {
+      if (result.template !== undefined) {
         setTemplate(result.template as string);
+      }
+      if (result.enableFacebook !== undefined) {
+        setEnableFacebook(result.enableFacebook as boolean);
       }
     });
   }, []);
 
   const handleSave = () => {
-    chrome.storage.sync.set({ template }, () => {
+    chrome.storage.sync.set({ template, enableFacebook }, () => {
       setSavedStatus(true);
       setTimeout(() => setSavedStatus(false), 2500);
     });
-  };
-
-  const previewData = {
-    displayName: "Your Kickstarter Sucks",
-    username: "ykspod",
-    site: "Instagram",
-  };
-
-  const renderPreview = (pattern: string) => {
-    return pattern
-      .replace(/\{displayName\}/g, previewData.displayName)
-      .replace(/\{username\}/g, previewData.username)
-      .replace(/\{site\}/g, previewData.site);
   };
 
   return (
@@ -44,9 +37,9 @@ export const OptionsApp: React.FC = () => {
         boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
       }}
     >
-      <h2>Meta Profile Tab Renamer Settings</h2>
+      <h2>Profile Tab Renamer Settings</h2>
       <p style={{ color: "#6c757d" }}>
-        Customize how tab titles are formatted when navigating to profile pages.
+        Customize how tab titles are formatted when navigating profile pages.
       </p>
 
       <div style={{ margin: "20px 0" }}>
@@ -72,31 +65,35 @@ export const OptionsApp: React.FC = () => {
 
       <div
         style={{
-          background: "#f1f3f5",
-          padding: "12px",
-          borderRadius: "4px",
-          marginBottom: "20px",
+          margin: "20px 0",
+          padding: "12px 0",
+          borderTop: "1px solid #eee",
+          borderBottom: "1px solid #eee",
         }}
       >
-        <strong>Available Placeholders:</strong>
-        <ul
-          style={{ margin: "8px 0 0 0", paddingLeft: "20px", fontSize: "13px" }}
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
         >
-          <code>{"{displayName}"}</code> — Profile display name
-          <br />
-          <code>{"{username}"}</code> — Profile handle / username
-          <br />
-          <code>{"{site}"}</code> — Platform name (Instagram, Facebook, Threads)
-        </ul>
-      </div>
-
-      <div style={{ marginBottom: "24px" }}>
-        <strong>Live Preview:</strong>
-        <div
-          style={{ marginTop: "6px", fontStyle: "italic", color: "#495057" }}
+          <input
+            type="checkbox"
+            checked={enableFacebook}
+            onChange={(e) => setEnableFacebook(e.target.checked)}
+            style={{ width: "18px", height: "18px", cursor: "pointer" }}
+          />
+          Enable tab renaming on Facebook (Experimental)
+        </label>
+        <p
+          style={{ margin: "4px 0 0 28px", fontSize: "12px", color: "#6c757d" }}
         >
-          "{renderPreview(template)}"
-        </div>
+          Facebook uses aggressive client-side routing that may affect
+          navigation feeds.
+        </p>
       </div>
 
       <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
@@ -112,20 +109,7 @@ export const OptionsApp: React.FC = () => {
             fontWeight: 600,
           }}
         >
-          Save Template
-        </button>
-        <button
-          onClick={() => setTemplate(DEFAULT_TEMPLATE)}
-          style={{
-            backgroundColor: "#e9ecef",
-            color: "#495057",
-            border: "none",
-            padding: "10px 18px",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Reset Default
+          Save Settings
         </button>
         {savedStatus && (
           <span style={{ color: "#198754", fontWeight: 500 }}>Saved!</span>

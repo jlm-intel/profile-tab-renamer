@@ -1,24 +1,30 @@
-// src/content/index.ts
 import { parseProfileInfo } from "./parsers";
-import { DEFAULT_TEMPLATE } from "../types";
-
-console.log("Content script loaded!");
+import { DEFAULT_TEMPLATE, DEFAULT_ENABLE_FACEBOOK } from "../types";
 
 let currentTemplate = DEFAULT_TEMPLATE;
-let isUpdatingTitle = false; // Flag to prevent observer loops
+let isFacebookEnabled = DEFAULT_ENABLE_FACEBOOK;
+let isUpdatingTitle = false;
 
-// Load stored template setting
-chrome.storage.sync.get(["template"], (result) => {
-  if (result.template) {
+// Load stored settings
+chrome.storage.sync.get(["template", "enableFacebook"], (result) => {
+  if (result.template !== undefined) {
     currentTemplate = result.template as string;
+  }
+  if (result.enableFacebook !== undefined) {
+    isFacebookEnabled = result.enableFacebook as boolean;
   }
   updateTabTitle();
 });
 
-// Watch for settings changes saved from Options UI
+// Listen for settings changes from Options UI
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === "sync" && changes.template) {
-    currentTemplate = changes.template.newValue as string;
+  if (namespace === "sync") {
+    if (changes.template) {
+      currentTemplate = changes.template.newValue as string;
+    }
+    if (changes.enableFacebook) {
+      isFacebookEnabled = changes.enableFacebook.newValue as boolean;
+    }
     updateTabTitle();
   }
 });
@@ -36,9 +42,13 @@ function applyTemplate(
 }
 
 async function updateTabTitle() {
+  // Guard clause: skip processing if Facebook is disabled and user is on Facebook
+  if (!isFacebookEnabled && window.location.hostname.includes("facebook.com")) {
+    return;
+  }
+
   const info = await parseProfileInfo();
 
-  // Validate that info exists AND that essential fields are not empty
   if (info && info.displayName.trim() !== "" && info.username.trim() !== "") {
     const newTitle = applyTemplate(currentTemplate, info);
 
@@ -46,27 +56,32 @@ async function updateTabTitle() {
       isUpdatingTitle = true;
       document.title = newTitle;
 
-      // Brief pause to ignore our own title change in MutationObserver
       setTimeout(() => {
         isUpdatingTitle = false;
-      }, 100);
+      }, 300);
     }
   }
 }
-// Observe URL shifts and external DOM title rewrites
-let lastUrl = location.href;
-const observer = new MutationObserver(() => {
-  if (isUpdatingTitle) return;
 
+// Observe URL shifts and title changes
+let lastUrl = location.href;
+setInterval(() => {
   if (location.href !== lastUrl) {
     lastUrl = location.href;
-    // SPAs take a moment to load profile metadata into the DOM/Title
-    setTimeout(updateTabTitle, 600);
-    setTimeout(updateTabTitle, 1500); // Secondary fallback for slower connections
+    updateTabTitle();
   }
-});
+}, 400);
 
-observer.observe(document.querySelector("head") || document.documentElement, {
-  subtree: true,
-  childList: true,
-});
+const titleElement = document.querySelector("title");
+if (titleElement) {
+  const titleObserver = new MutationObserver(() => {
+    if (isUpdatingTitle) return;
+    updateTabTitle();
+  });
+
+  titleObserver.observe(titleElement, {
+    childList: true,
+    characterData: true,
+    subtree: true,
+  });
+}
