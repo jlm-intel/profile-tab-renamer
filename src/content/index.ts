@@ -1,9 +1,13 @@
+// src/content/index.ts
 import { parseProfileInfo } from "./parsers";
 import { DEFAULT_TEMPLATE, DEFAULT_ENABLE_FACEBOOK } from "../types";
 
 let currentTemplate = DEFAULT_TEMPLATE;
 let isFacebookEnabled = DEFAULT_ENABLE_FACEBOOK;
 let isUpdatingTitle = false;
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+const DEBOUNCE_DELAY_MS = 500;
 
 // Load stored settings
 chrome.storage.sync.get(["template", "enableFacebook"], (result) => {
@@ -13,7 +17,7 @@ chrome.storage.sync.get(["template", "enableFacebook"], (result) => {
   if (result.enableFacebook !== undefined) {
     isFacebookEnabled = result.enableFacebook as boolean;
   }
-  updateTabTitle();
+  debounceUpdate();
 });
 
 // Listen for settings changes from Options UI
@@ -25,7 +29,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     if (changes.enableFacebook) {
       isFacebookEnabled = changes.enableFacebook.newValue as boolean;
     }
-    updateTabTitle();
+    debounceUpdate();
   }
 });
 
@@ -56,6 +60,7 @@ async function updateTabTitle() {
       isUpdatingTitle = true;
       document.title = newTitle;
 
+      // Ignore our own title mutation
       setTimeout(() => {
         isUpdatingTitle = false;
       }, 300);
@@ -63,25 +68,33 @@ async function updateTabTitle() {
   }
 }
 
-// Observe URL shifts and title changes
+// Resets and restarts the 500ms countdown timer
+function debounceUpdate() {
+  if (debounceTimer !== null) {
+    clearTimeout(debounceTimer);
+  }
+  debounceTimer = setTimeout(() => {
+    debounceTimer = null;
+    updateTabTitle();
+  }, DEBOUNCE_DELAY_MS);
+}
+
+// 1. Observe the entire document for mutations, deferring parsing until rendering settles
+const observer = new MutationObserver(() => {
+  if (isUpdatingTitle) return;
+  debounceUpdate();
+});
+
+observer.observe(document.documentElement, {
+  childList: true,
+  subtree: true,
+});
+
+// 2. Poll for URL shifts to trigger the debounce timer immediately on client-side route changes
 let lastUrl = location.href;
 setInterval(() => {
   if (location.href !== lastUrl) {
     lastUrl = location.href;
-    updateTabTitle();
+    debounceUpdate();
   }
-}, 400);
-
-const titleElement = document.querySelector("title");
-if (titleElement) {
-  const titleObserver = new MutationObserver(() => {
-    if (isUpdatingTitle) return;
-    updateTabTitle();
-  });
-
-  titleObserver.observe(titleElement, {
-    childList: true,
-    characterData: true,
-    subtree: true,
-  });
-}
+}, 200);

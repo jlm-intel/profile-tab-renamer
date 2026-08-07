@@ -9,6 +9,7 @@ export default defineConfig({
   build: {
     emptyOutDir: true,
     outDir: "dist",
+    modulePreload: false,
   },
   server: {
     port: 5173,
