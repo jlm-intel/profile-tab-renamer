@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <!-- Rich Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A8A" />
+      <stop offset="50%" stop-color="#581C87" />
+      <stop offset="100%" stop-color="#9D174D" />
+    </linearGradient>
+
+    <!-- Deep Drop Shadow for High Canvas Contrast -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Outer Icon Container (Squircle) -->
+  <rect width="128" height="128" rx="28" fill="url(#bgGrad)" />
+
+  <!-- Enlarged Browser Window Group -->
+  <g filter="url(#shadow)">
+    <!-- Semi-Transparent White Outer Rim for Sharp Edge Contrast -->
+    <rect x="8" y="18" width="112" height="92" rx="12" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.35" />
+
+    <!-- Dark Slate Window Header Bar (Contrasts sharply with background) -->
+    <path d="M 8 30 C 8 23.373 13.373 18 20 18 L 108 18 C 114.627 18 120 23.373 120 30 L 120 48 L 8 48 Z" fill="#0F172A" />
+
+    <!-- Window Controls -->
+    <circle cx="19" cy="33" r="3" fill="#EF4444" />
+    <circle cx="27" cy="33" r="3" fill="#F59E0B" />
+    <circle cx="35" cy="33" r="3" fill="#10B981" />
+
+    <!-- Active Tab (Stark White against Dark Slate Header) -->
+    <path d="M 44 48 L 48 27 C 49 24 51 22 54 22 L 114 22 C 117 22 119 24 120 27 L 120 48 Z" fill="#FFFFFF" />
+
+    <!-- Tab Title Content -->
+    <circle cx="60" cy="35" r="4" fill="#334155" />
+    <rect x="68" y="29" width="42" height="12" rx="6" fill="#7C3AED" />
+    <text x="89" y="37.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="7.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">@name</text>
+
+    <!-- Main Browser Body Window -->
+    <path d="M 8 48 L 120 48 L 120 98 C 120 104.627 114.627 110 108 110 L 20 110 C 13.373 110 8 104.627 8 98 Z" fill="#F8FAFC" />
+
+    <!-- Mock Web Page Content Area -->
+    <g transform="translate(18, 58)">
+      <!-- Profile Avatar -->
+      <circle cx="16" cy="14" r="9" fill="#475569" />
+      <path d="M 3 34 C 3 25 8 23 16 23 C 24 23 29 25 29 34 Z" fill="#475569" />
+
+      <!-- Profile Text Lines -->
+      <rect x="38" y="8" width="56" height="12" rx="4" fill="#1E293B" />
+      <rect x="38" y="24" width="38" height="6" rx="3" fill="#94A3B8" />
+    </g>
+  </g>
+</svg>
