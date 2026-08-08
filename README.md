@@ -1,6 +1,7 @@
 # Profile Tab Renamer
 
-Profile Tab Renamer is a Chrome extension that rewrites browser tab titles on profile pages so they are easier to scan and switch between.
+Profile Tab Renamer is a Chrome extension that reformats browser tabs for social media profile pages so they are easier to identify and create more
+meaningful bookmark names.
 
 Supported sites:
 
@@ -10,7 +11,7 @@ Supported sites:
 
 ## What It Does
 
-When you open a supported profile route, the extension extracts profile data and applies a customizable title template.
+When you open a supported profile page, the extension extracts profile data and applies a customizable title template.
 
 Default template:
 
@@ -64,7 +65,7 @@ npm run build
 
 This outputs the unpacked extension to `dist/`.
 
-### 3. Load in Chrome
+### 3. Load in Chrome (local builds)
 
 1. Open `chrome://extensions`
 2. Enable Developer mode
@@ -83,7 +84,6 @@ Useful scripts:
 
 - `npm run build`: Type-check and production build
 - `npm run lint`: Run ESLint
-- `npm run preview`: Preview the built output
 
 ## Notes
 
