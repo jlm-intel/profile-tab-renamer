@@ -9,10 +9,10 @@ export interface ProfileInfo {
   site: "Instagram" | "Facebook" | "Threads";
 }
 
-export const DEFAULT_TEMPLATE = "{displayName} ({username}) @ {site}";
+export const DEFAULT_TEMPLATE = "{d} ({u}) @ {s}";
 export const DEFAULT_ENABLE_FACEBOOK = false;
 
 // Template variables available to users:
-// {displayName} - e.g., "Your Kickstarter Sucks"
-// {username}    - e.g., "ykspod"
-// {site}        - e.g., "Instagram"
+// {d} - displayName, e.g., "Your Kickstarter Sucks"
+// {u} - username, e.g., "ykspod"
+// {s} - site, e.g., "Instagram"

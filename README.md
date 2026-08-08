@@ -1,75 +1,91 @@
-# React + TypeScript + Vite
+# Profile Tab Renamer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Profile Tab Renamer is a Chrome extension that rewrites browser tab titles on profile pages so they are easier to scan and switch between.
 
-Currently, two official plugins are available:
+Supported sites:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Instagram
+- Threads
+- Facebook (optional/experimental)
 
-## React Compiler
+## What It Does
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+When you open a supported profile route, the extension extracts profile data and applies a customizable title template.
 
-## Expanding the ESLint configuration
+Default template:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```text
+{d} ({u}) @ {s}
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Available template variables:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `{d}`: Profile **d**isplay name (for example, `Jane Doe`)
+- `{u}`: Profile **u**sername handle or identifier (for example, `janedoe93`)
+- `{s}`: **S**ite name (`Instagram`, `Facebook`, or `Threads`)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Extension Settings
 
+The extension popup includes:
+
+- `Title Template`: Custom text format using the variables above
+- `Enable on Facebook`: Toggle for Facebook support
+
+Settings are persisted with `chrome.storage.sync`.
+
+## Tech Stack
+
+- TypeScript
+- React (options UI)
+- Vite
+- CRXJS Vite plugin (`@crxjs/vite-plugin`) for Chrome extension bundling
+
+## Project Structure
+
+- `manifest.json`: Extension manifest (MV3), permissions, host matches, popup, and content script registration
+- `src/content/index.ts`: Main content script, settings sync, mutation observation, and debounced title updates
+- `src/content/parsers.ts`: Site-specific profile parsing for Instagram, Facebook, and Threads
+- `src/options/OptionsApp.tsx`: Popup UI for template and Facebook toggle settings
+- `src/types.ts`: Shared types and default option values
+
+## Getting Started
+
+### 1. Install dependencies
+
+```bash
+npm install
 ```
+
+### 2. Build the extension
+
+```bash
+npm run build
+```
+
+This outputs the unpacked extension to `dist/`.
+
+### 3. Load in Chrome
+
+1. Open `chrome://extensions`
+2. Enable Developer mode
+3. Click Load unpacked
+4. Select the `dist/` folder
+
+## Development
+
+Run Vite in dev mode:
+
+```bash
+npm run dev
+```
+
+Useful scripts:
+
+- `npm run build`: Type-check and production build
+- `npm run lint`: Run ESLint
+- `npm run preview`: Preview the built output
+
+## Notes
+
+- Facebook support is marked experimental in the UI and may behave inconsistently on some client-side navigation flows.
+- The extension only modifies titles when it can parse both display name and username from the active route/page.

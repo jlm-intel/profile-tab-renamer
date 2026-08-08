@@ -40,9 +40,9 @@ function applyTemplate(
   if (!info) return document.title;
 
   return template
-    .replace(/\{displayName\}/g, info.displayName)
-    .replace(/\{username\}/g, info.username)
-    .replace(/\{site\}/g, info.site);
+    .replace(/\{d\}/g, info.displayName)
+    .replace(/\{u\}/g, info.username)
+    .replace(/\{s\}/g, info.site);
 }
 
 async function updateTabTitle() {
