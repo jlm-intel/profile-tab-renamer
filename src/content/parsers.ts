@@ -173,70 +173,38 @@ async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
 
 async function parseThreads(url: URL): Promise<ProfileInfo | null> {
   const pathSegments = url.pathname.split("/").filter(Boolean);
-  if (pathSegments.length === 0 || !pathSegments[0].startsWith("@"))
-    return null;
-
-  const fallbackUsername = pathSegments[0].replace("@", "");
-
-  // 1. Decode any HTML entities present in document.title
-  const rawTitle = document.title || "";
-  const doc = new DOMParser().parseFromString(rawTitle, "text/html");
-  const decodedTitle = doc.documentElement.textContent || rawTitle;
-
-  // 2. LOOP PREVENTION: If the title already ends with "@ Threads" or contains our template format,
-  // it means we've already renamed it. Return null so updateTabTitle leaves it alone!
-  if (
-    decodedTitle.includes("@ Threads") ||
-    decodedTitle.endsWith("(Threads)")
-  ) {
+  if (pathSegments.length === 0 || !pathSegments[0].startsWith("@")) {
     return null;
   }
 
-  // 3. Pattern A: Custom display name present in Threads' native title format
-  // Matches: "Trischa Marie (@that1lilredhead) • Threads, Say more"
-  const customNameMatch = decodedTitle.match(/^(.*?)\s*\(@([^)]+)\)/);
+  // 1. Extract username directly from path
+  const username = pathSegments[0].replace("@", "");
 
-  if (customNameMatch) {
-    const displayName = customNameMatch[1].trim();
-    const username = customNameMatch[2].trim();
+  // 2. Preserve notification badge if present
+  const badgeMatch = document.title.match(/^(\(\d+\+?\))\s*/);
+  const badgePrefix = badgeMatch ? `${badgeMatch[1]} ` : "";
 
-    if (displayName && username) {
-      return {
-        displayName,
-        username,
-        site: "Threads",
-      };
-    }
+  // 3. Get text from the last H1 element in the DOM
+  const h1Elements = document.querySelectorAll("h1");
+  let rawDisplayName = "";
+
+  if (h1Elements.length > 0) {
+    rawDisplayName =
+      h1Elements[h1Elements.length - 1].textContent?.trim() || "";
   }
 
-  // 4. Pattern B: No custom display name set (starts directly with @username)
-  // Matches: "@dolphin.1844328 • Threads, Say more"
-  const defaultUserMatch = decodedTitle.match(/^@([^\s•]+)/);
-
-  if (defaultUserMatch) {
-    const username = defaultUserMatch[1].trim();
-    if (username) {
-      return {
-        displayName: username,
-        username,
-        site: "Threads",
-      };
-    }
+  // Fallback to username if no H1 text exists
+  if (!rawDisplayName) {
+    rawDisplayName = username;
   }
 
-  // 5. Fallback: If document.title was reset to "Threads" or similar default SPA title,
-  // fallback to using the username parsed directly from the URL path.
-  // BUT only do this if document.title is literally just "Threads" or empty,
-  // avoiding overwriting existing valid states.
-  if (decodedTitle === "Threads" || decodedTitle === "") {
-    return {
-      displayName: fallbackUsername,
-      username: fallbackUsername,
-      site: "Threads",
-    };
-  }
+  const displayName = `${badgePrefix}${rawDisplayName}`;
 
-  return null;
+  return {
+    displayName,
+    username,
+    site: "Threads",
+  };
 }
 
 /*

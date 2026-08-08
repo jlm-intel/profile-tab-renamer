@@ -10,11 +10,11 @@ export const OptionsApp: React.FC = () => {
 
   useEffect(() => {
     chrome.storage.sync.get(["template", "enableFacebook"], (result) => {
-      if (result.template !== undefined) {
-        setTemplate(result.template as string);
+      if (typeof result.template === "string") {
+        setTemplate(result.template);
       }
-      if (result.enableFacebook !== undefined) {
-        setEnableFacebook(result.enableFacebook as boolean);
+      if (typeof result.enableFacebook === "boolean") {
+        setEnableFacebook(result.enableFacebook);
       }
     });
   }, []);
@@ -22,29 +22,27 @@ export const OptionsApp: React.FC = () => {
   const handleSave = () => {
     chrome.storage.sync.set({ template, enableFacebook }, () => {
       setSavedStatus(true);
-      setTimeout(() => setSavedStatus(false), 2500);
+      setTimeout(() => setSavedStatus(false), 2000);
     });
   };
 
   return (
-    <div
-      style={{
-        maxWidth: "560px",
-        margin: "0 auto",
-        background: "#fff",
-        padding: "24px",
-        borderRadius: "8px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-      }}
-    >
-      <h2>Profile Tab Renamer Settings</h2>
-      <p style={{ color: "#6c757d" }}>
-        Customize how tab titles are formatted when navigating profile pages.
+    <div style={{ width: "100%", boxSizing: "border-box" }}>
+      <h3 style={{ margin: "0 0 4px 0", fontSize: "16px" }}>
+        Profile Tab Renamer
+      </h3>
+      <p style={{ color: "#6c757d", fontSize: "12px", margin: "0 0 16px 0" }}>
+        Customize tab title formats across profile routes.
       </p>
 
-      <div style={{ margin: "20px 0" }}>
+      <div style={{ marginBottom: "16px" }}>
         <label
-          style={{ fontWeight: 600, display: "block", marginBottom: "8px" }}
+          style={{
+            fontWeight: 600,
+            display: "block",
+            marginBottom: "6px",
+            fontSize: "13px",
+          }}
         >
           Title Template:
         </label>
@@ -54,8 +52,8 @@ export const OptionsApp: React.FC = () => {
           onChange={(e) => setTemplate(e.target.value)}
           style={{
             width: "100%",
-            padding: "10px",
-            fontSize: "14px",
+            padding: "8px",
+            fontSize: "13px",
             borderRadius: "4px",
             border: "1px solid #ced4da",
             boxSizing: "border-box",
@@ -65,54 +63,57 @@ export const OptionsApp: React.FC = () => {
 
       <div
         style={{
-          margin: "20px 0",
           padding: "12px 0",
           borderTop: "1px solid #eee",
           borderBottom: "1px solid #eee",
+          marginBottom: "16px",
         }}
       >
         <label
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "10px",
+            gap: "8px",
             cursor: "pointer",
             fontWeight: 600,
+            fontSize: "13px",
           }}
         >
           <input
             type="checkbox"
             checked={enableFacebook}
             onChange={(e) => setEnableFacebook(e.target.checked)}
-            style={{ width: "18px", height: "18px", cursor: "pointer" }}
+            style={{ width: "16px", height: "16px", cursor: "pointer" }}
           />
-          Enable tab renaming on Facebook (Experimental)
+          Enable on Facebook
         </label>
         <p
-          style={{ margin: "4px 0 0 28px", fontSize: "12px", color: "#6c757d" }}
+          style={{ margin: "4px 0 0 24px", fontSize: "11px", color: "#6c757d" }}
         >
-          Facebook uses aggressive client-side routing that may affect
-          navigation feeds.
+          Experimental. May interfere with client-side feed navigation.
         </p>
       </div>
 
-      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
         <button
           onClick={handleSave}
           style={{
             backgroundColor: "#0d6efd",
             color: "#fff",
             border: "none",
-            padding: "10px 18px",
+            padding: "8px 14px",
             borderRadius: "4px",
             cursor: "pointer",
             fontWeight: 600,
+            fontSize: "13px",
           }}
         >
           Save Settings
         </button>
         {savedStatus && (
-          <span style={{ color: "#198754", fontWeight: 500 }}>Saved!</span>
+          <span style={{ color: "#198754", fontWeight: 600, fontSize: "12px" }}>
+            Saved!
+          </span>
         )}
       </div>
     </div>

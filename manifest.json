@@ -10,9 +10,9 @@
     "*://*.threads.net/*",
     "*://*.threads.com/*"
   ],
-  "options_ui": {
-    "page": "src/options/options.html",
-    "open_in_tab": true
+  "action": {
+    "default_title": "Profile Tab Renamer",
+    "default_popup": "src/options/options.html"
   },
   "content_scripts": [
     {

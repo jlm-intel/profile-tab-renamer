@@ -56,7 +56,7 @@ async function updateTabTitle() {
   if (info && info.displayName.trim() !== "" && info.username.trim() !== "") {
     const newTitle = applyTemplate(currentTemplate, info);
 
-    if (document.title !== newTitle) {
+    if (!document.title.includes(newTitle)) {
       isUpdatingTitle = true;
       document.title = newTitle;
 
