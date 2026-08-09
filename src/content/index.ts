@@ -46,41 +46,49 @@ function applyTemplate(
 }
 
 async function updateTabTitle() {
-  // Guard clause: skip processing if Facebook is disabled and user is on Facebook
+  // Skip processing if Facebook is disabled and user is on Facebook
   if (!isFacebookEnabled && window.location.hostname.includes("facebook.com")) {
     return;
   }
 
+  // Prevent multiple updates from overlapping while we are parsing and updating the title
+  isUpdatingTitle = true;
   const info = await parseProfileInfo();
 
+  // If info is NULL, it means we couldn't parse the profile info and shouldn't update the title.
+  // If info is valid, we check if displayName and username are non-empty before applying the template.
   if (info && info.displayName.trim() !== "" && info.username.trim() !== "") {
     const newTitle = applyTemplate(currentTemplate, info);
 
+    // Only update the title if it has changed to avoid unnecessary reflows
     if (!document.title.includes(newTitle)) {
-      isUpdatingTitle = true;
       document.title = newTitle;
-
-      // Ignore our own title mutation
-      setTimeout(() => {
-        isUpdatingTitle = false;
-      }, 300);
     }
   }
+  isUpdatingTitle = false;
 }
 
 // Resets and restarts the 500ms countdown timer
 function debounceUpdate() {
   if (debounceTimer !== null) {
+    // always reset the timer if a new mutation is observed before the previous timer has completed. we do this because Meta
+    // sites often have multiple mutations in quick succession when rendering profile pages, and we want to wait until the
+    // rendering has settled before parsing the profile info and updating the title.
     clearTimeout(debounceTimer);
   }
+
+  // once the timer completes, call updateTabTitle() to parse the profile info and update the title. this ensures that we
+  // don't update the title too frequently, which could cause performance issues or flickering.
   debounceTimer = setTimeout(() => {
     debounceTimer = null;
     updateTabTitle();
   }, DEBOUNCE_DELAY_MS);
 }
 
-// 1. Observe the entire document for mutations, deferring parsing until rendering settles
+// Observe the entire document for mutations, deferring parsing until rendering settles
 const observer = new MutationObserver(() => {
+  // If we're already in the process of updating the title, we don't want to trigger another update. This prevents
+  // multiple overlapping updates that could cause flickering or performance issues.
   if (isUpdatingTitle) return;
   debounceUpdate();
 });
@@ -90,7 +98,7 @@ observer.observe(document.documentElement, {
   subtree: true,
 });
 
-// 2. Poll for URL shifts to trigger the debounce timer immediately on client-side route changes
+// Poll for URL shifts to trigger the debounce timer immediately on client-side route changes
 let lastUrl = location.href;
 setInterval(() => {
   if (location.href !== lastUrl) {

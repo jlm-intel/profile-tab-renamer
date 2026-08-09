@@ -5,6 +5,7 @@ export async function parseProfileInfo(): Promise<ProfileInfo | null> {
   const url = new URL(window.location.href);
   const hostname = url.hostname;
 
+  // each site has its own parsing logic.
   if (hostname.includes("instagram.com")) {
     return await parseInstagram(url);
   } else if (hostname.includes("facebook.com")) {
@@ -16,6 +17,7 @@ export async function parseProfileInfo(): Promise<ProfileInfo | null> {
     return await parseThreads(url);
   }
 
+  // skip parsing for unsupported sites
   return null;
 }
 
@@ -23,6 +25,7 @@ async function parseInstagram(url: URL): Promise<ProfileInfo | null> {
   const pathSegments = url.pathname.split("/").filter(Boolean);
   if (pathSegments.length === 0) return null;
 
+  // ignore profile routes that are not user profiles (e.g., /explore, /reels, /direct, /stories, /p/, /accounts)
   const reserved = ["explore", "reels", "direct", "stories", "p", "accounts"];
   if (reserved.includes(pathSegments[0])) return null;
 
@@ -46,9 +49,10 @@ async function parseInstagram(url: URL): Promise<ProfileInfo | null> {
     if (titleMatch && titleMatch[1]) {
       displayName = titleMatch[1].trim();
     } else {
-      displayName = (await getRawServerTitle()) || "";
-      // Fallback: Try header elements inside the main profile layout
+      // See if current page has a valid display name in the HTML title
+      displayName = (await getInstagramHtmlTitle()) || "";
       if (!displayName) {
+        // Fallback: Try header elements inside the main profile layout
         const h1Text = document
           .querySelector("header h1, main h1")
           ?.textContent?.trim();
@@ -59,24 +63,16 @@ async function parseInstagram(url: URL): Promise<ProfileInfo | null> {
     }
   }
 
+  // If displayName is still empty or matches the username, fall back to username
   return { displayName: displayName || username, username, site: "Instagram" };
 }
 
-// src/content/parsers.ts
-
-// src/content/parsers.ts
-
 async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
-  const pathname = url.pathname.toLowerCase();
-  const pathSegments = pathname.split("/").filter(Boolean);
+  const pathname = url.pathname.toLowerCase(); // example: /ultimateoutsider/
+  const pathSegments = pathname.split("/").filter(Boolean); // example: ['ultimateoutsider']
 
-  // print the pathname and pathSegments for debugging
-  console.log("Facebook pathname:", pathname);
-  console.log("Facebook pathSegments:", pathSegments);
-
-  // 1. Root page checks (e.g., https://www.facebook.com/ or https://www.facebook.com/?filter=friends)
+  // 1. Root page checks (e.g., https://www.facebook.com/)
   if (pathSegments.length === 0) {
-    console.log("Facebook root page detected. No profile info to parse.");
     return null;
   }
 
@@ -100,7 +96,6 @@ async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
 
   // If the first segment matches any reserved keyword, return null immediately
   if (reserved.includes(pathSegments[0])) {
-    console.log(`Facebook reserved route detected: ${pathSegments[0]}`);
     return null;
   }
 
@@ -123,17 +118,9 @@ async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
     if (!username) return null;
   }
 
-  // 3. LOOP/REPEAT PREVENTION: Check if document.title is already formatted by us
   const rawTitle = document.title || "";
-  if (rawTitle.includes("@ Facebook") || rawTitle.endsWith("(Facebook)")) {
-    console.log(
-      "Facebook title already formatted by extension. Skipping further parsing:",
-      rawTitle,
-    );
-    return null;
-  }
 
-  // 4. PRIORITY 1: Try getting the fresh display name from the current H1 element
+  // Try getting the fresh display name from the current H1 element
   let displayName = "";
   const h1Element = document.querySelector("main h1, div[role='main'] h1");
   if (h1Element && h1Element.textContent) {
@@ -144,15 +131,15 @@ async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
     displayName = h1Element.textContent.trim();
   }
 
-  // 5. PRIORITY 2: Fallback to script tag extraction ONLY if H1 isn't available
+  // Fallback to script tag extraction ONLY if H1 isn't available
   if (!displayName || displayName.toLowerCase() === "facebook") {
     console.log(
       "H1 element not found or invalid. Attempting to extract display name from script tags.",
     );
-    displayName = extractNameFromScriptTags(username) || "";
+    displayName = getFacebookNameFromScripts() || "";
   }
 
-  // 6. PRIORITY 3: Fallback to current document title
+  // Fallback to current document title
   if (!displayName) {
     console.log(
       "Script tag extraction failed. Attempting to extract display name from document.title.",
@@ -207,56 +194,13 @@ async function parseThreads(url: URL): Promise<ProfileInfo | null> {
   };
 }
 
-/*
-function extractFullNameFromScriptTags(): string | null {
-  // Query scripts that are set to application/json or similar data scripts
-  const scripts = Array.from(
-    document.querySelectorAll('script[type*="json"], script:not([src])'),
-  );
-
-  for (const script of scripts) {
-    const text = script.textContent || "";
-    if (!text.includes('"full_name"')) continue;
-
-    // Match "full_name":"Value"
-    const match = text.match(/"full_name"\s*:\s*"([^"]+)"/);
-
-    if (match && match[1]) {
-      let name = match[1];
-
-      try {
-        // Unescape unicode characters (e.g., \u0020)
-        name = JSON.parse(`"${name}"`);
-      } catch {
-        // Fall back to raw matched string if JSON parsing fails
-      }
-
-      return name.trim();
-    }
-  }
-
-  return null;
-}
-*/
-
-function extractNameFromScriptTags(currentUsername: string): string | null {
+function getFacebookNameFromScripts(): string | null {
   const scripts = Array.from(document.querySelectorAll("script:not([src])"));
 
   // Search through script tags in reverse order (newest script tags first)
   for (let i = scripts.length - 1; i >= 0; i--) {
     const text = scripts[i].textContent || "";
     if (!text.includes('"profile_owner"')) continue;
-
-    // Verify the script tag is relevant to the current profile route
-    if (currentUsername && !text.includes(currentUsername)) {
-      // If the script payload doesn't reference the current username/ID, skip it
-      // to avoid using stale data from a previously visited profile
-      console.log(
-        "(NOT) Skipping script tag extraction: does not reference current username:",
-        currentUsername,
-      );
-      //continue;
-    }
 
     // if text contains the pattern "profile_owner", print 100 characters beginning with that pattern for debugging
     const profileOwnerIndex = text.indexOf('"profile_owner"');
@@ -282,10 +226,6 @@ function extractNameFromScriptTags(currentUsername: string): string | null {
     if (match) {
       // print the matched name for debugging
       console.log("Extracted display name from script tag:", match[1]);
-    } else {
-      console.log(
-        "No display name found in script tag. Continuing to next script tag.",
-      );
     }
 
     if (match && match[1]) {
@@ -303,7 +243,7 @@ function extractNameFromScriptTags(currentUsername: string): string | null {
   return null;
 }
 
-async function getRawServerTitle(): Promise<string | null> {
+async function getInstagramHtmlTitle(): Promise<string | null> {
   try {
     const response = await fetch(window.location.href, {
       cache: "force-cache",

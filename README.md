@@ -89,3 +89,8 @@ Useful scripts:
 
 - Facebook support is marked experimental in the UI and may behave inconsistently on some client-side navigation flows.
 - The extension only modifies titles when it can parse both display name and username from the active route/page.
+
+## Known issues
+
+- On Facebook, tab titles don't always update automatically when you click a user's profile. (Title will update if you perform a page reload.)
+- On Facebook, profile URLs that contain the user's account ID instead of their username/handle display the ID in parenthesis instead of the username.
