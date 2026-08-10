@@ -9,6 +9,7 @@ export interface ProfileInfo {
   displayName: string;
   username: string;
   site: "Instagram" | "Facebook" | "Threads";
+  notificationBadge?: string; // optional notification badge, e.g., "(3)"
 }
 
 // Template variables available to users:

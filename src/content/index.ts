@@ -58,7 +58,10 @@ async function updateTabTitle() {
   // If info is NULL, it means we couldn't parse the profile info and shouldn't update the title.
   // If info is valid, we check if displayName and username are non-empty before applying the template.
   if (info && info.displayName.trim() !== "" && info.username.trim() !== "") {
-    const newTitle = applyTemplate(currentTemplate, info);
+    let newTitle = applyTemplate(currentTemplate, info);
+    if (info.notificationBadge) {
+      newTitle = `${info.notificationBadge}${newTitle}`;
+    }
 
     // Only update the title if it has changed to avoid unnecessary reflows
     if (!document.title.includes(newTitle)) {

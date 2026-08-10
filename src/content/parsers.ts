@@ -99,6 +99,10 @@ async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
     return null;
   }
 
+  // Preserve notification badge if present
+  const badgeMatch = document.title.match(/^(\(\d+\+?\))\s*/);
+  const badgePrefix = badgeMatch ? `${badgeMatch[1]} ` : "";
+
   // Block any feed parameters in the query string
   if (url.searchParams.has("filter") || url.searchParams.has("sk")) {
     console.log(
@@ -144,7 +148,9 @@ async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
     console.log(
       "Script tag extraction failed. Attempting to extract display name from document.title.",
     );
-    displayName = rawTitle.split("|")[0].split("-")[0].trim();
+    // Strip leading notification badge (e.g., "(3) ") before splitting on delimiters
+    const cleanTitle = rawTitle.replace(/^\(\d+\+?\)\s*/, "");
+    displayName = cleanTitle.split("|")[0].split("-")[0].trim();
   }
 
   // If no valid name was found or it matches default branding, fall back to username
@@ -155,7 +161,23 @@ async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
     displayName = username;
   }
 
-  return { displayName, username, site: "Facebook" };
+  if (displayName) {
+    console.log(
+      `Final display name determined: "${displayName}" for username: "${username}"`,
+    );
+  }
+  if (badgePrefix) {
+    console.log(
+      `Notification badge detected: "${badgePrefix}" for username: "${username}"`,
+    );
+  }
+
+  return {
+    displayName,
+    username,
+    site: "Facebook",
+    notificationBadge: badgePrefix,
+  };
 }
 
 async function parseThreads(url: URL): Promise<ProfileInfo | null> {
@@ -185,12 +207,13 @@ async function parseThreads(url: URL): Promise<ProfileInfo | null> {
     rawDisplayName = username;
   }
 
-  const displayName = `${badgePrefix}${rawDisplayName}`;
+  const displayName = `${rawDisplayName}`;
 
   return {
     displayName,
     username,
     site: "Threads",
+    notificationBadge: badgePrefix,
   };
 }
 
