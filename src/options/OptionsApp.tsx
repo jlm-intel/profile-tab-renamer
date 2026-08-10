@@ -1,3 +1,22 @@
+/**
+ * Profile Tab Renamer - Customizes tab title formats across social media profile pages.
+ * Copyright (C) 2026 Josh Mayfield (ultimateoutsider) <ultimateoutsider@ultimateoutsider.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+// src/options/OptionsApp.tsx
 import React, { useEffect, useState } from "react";
 import { DEFAULT_TEMPLATE, DEFAULT_ENABLE_FACEBOOK } from "../types";
 
@@ -53,17 +72,29 @@ export const OptionsApp: React.FC = () => {
     );
   };
 
+  const handleResetTemplate = () => {
+    setTemplate(DEFAULT_TEMPLATE);
+  };
+
   return (
-    <div style={{ width: "100%", boxSizing: "border-box" }}>
-      <h3 style={{ margin: "0 0 4px 0", fontSize: "16px" }}>
+    <div
+      style={{
+        width: "100%",
+        boxSizing: "border-box",
+        backgroundColor: "#ecf7bd",
+        border: "2px solid #7d8364",
+        padding: "8px",
+      }}
+    >
+      <h3 style={{ margin: "0 0 4px 0", fontSize: "18px" }}>
         Profile Tab Renamer
       </h3>
-      <p style={{ color: "#6c757d", fontSize: "12px", margin: "0 0 16px 0" }}>
+      <p style={{ color: "#3f3f46", fontSize: "14px", margin: "0 0 16px 0" }}>
         Edit the Title Template to change how profile tab titles are named. You
         can use the following variables in your template:
         <ul
           style={{
-            margin: "4px 0 0 16px",
+            margin: "4px 0 0 24px",
             padding: "0",
             listStyleType: "disc",
           }}
@@ -81,16 +112,34 @@ export const OptionsApp: React.FC = () => {
       </p>
 
       <div style={{ marginBottom: "16px" }}>
-        <label
+        <div
           style={{
-            fontWeight: 600,
-            display: "block",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             marginBottom: "6px",
-            fontSize: "13px",
           }}
         >
-          Title Template:
-        </label>
+          <label style={{ fontWeight: 600, fontSize: "16px" }}>
+            Title Template:
+          </label>
+          <button
+            type="button"
+            onClick={handleResetTemplate}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#0d6efd",
+              cursor: "pointer",
+              fontSize: "14px",
+              padding: 0,
+              textDecoration: "underline",
+            }}
+          >
+            Restore Default Template
+          </button>
+        </div>
+
         <input
           type="text"
           value={template}
@@ -102,7 +151,7 @@ export const OptionsApp: React.FC = () => {
           style={{
             width: "100%",
             padding: "8px",
-            fontSize: "13px",
+            fontSize: "14px",
             borderRadius: "4px",
             border: "1px solid #ced4da",
             boxSizing: "border-box",
@@ -117,7 +166,7 @@ export const OptionsApp: React.FC = () => {
             backgroundColor: "#f8f9fa",
             border: "1px solid #e9ecef",
             borderRadius: "4px",
-            fontSize: "12px",
+            fontSize: "14px",
             display: "flex",
             alignItems: "center",
             gap: "6px",
@@ -131,7 +180,7 @@ export const OptionsApp: React.FC = () => {
               fontWeight: 700,
               color: "#6c757d",
               textTransform: "uppercase",
-              fontSize: "10px",
+              fontSize: "12px",
               letterSpacing: "0.5px",
             }}
           >
@@ -141,7 +190,7 @@ export const OptionsApp: React.FC = () => {
             style={{
               color: "#212529",
               fontFamily: "monospace",
-              fontSize: "11px",
+              fontSize: "14px",
               overflow: "hidden",
               textOverflow: "ellipsis",
             }}
@@ -154,8 +203,8 @@ export const OptionsApp: React.FC = () => {
       <div
         style={{
           padding: "12px 0",
-          borderTop: "1px solid #eee",
-          borderBottom: "1px solid #eee",
+          borderTop: "1px solid #7d8364",
+          borderBottom: "1px solid #7d8364",
           marginBottom: "16px",
         }}
       >
@@ -166,7 +215,7 @@ export const OptionsApp: React.FC = () => {
             gap: "8px",
             cursor: "pointer",
             fontWeight: 600,
-            fontSize: "13px",
+            fontSize: "16px",
           }}
         >
           <input
@@ -177,12 +226,10 @@ export const OptionsApp: React.FC = () => {
           />
           Enable on Facebook
         </label>
-        <p
-          style={{ margin: "4px 0 0 24px", fontSize: "11px", color: "#6c757d" }}
-        >
+        <p style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#3f3f46" }}>
           Experimental. You might need to reload profile pages on Facebook in
-          order for title changes to take effect. Some profile names may not be
-          parsed correctly.
+          order for title changes to take effect. Some profiles may show user ID
+          number instead of username.
         </p>
       </div>
 
@@ -197,7 +244,7 @@ export const OptionsApp: React.FC = () => {
             borderRadius: "4px",
             cursor: "pointer",
             fontWeight: 600,
-            fontSize: "13px",
+            fontSize: "14px",
           }}
         >
           Save Settings

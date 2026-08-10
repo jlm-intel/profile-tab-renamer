@@ -19,6 +19,8 @@ Default template:
 {d} ({u}) @ {s}
 ```
 
+_Example title:_ Jane Doe (janedoe93) @ Intstagram
+
 Available template variables:
 
 - `{d}`: Profile **d**isplay name (for example, `Jane Doe`)
