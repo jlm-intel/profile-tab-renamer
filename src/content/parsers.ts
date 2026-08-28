@@ -43,46 +43,80 @@ async function parseInstagram(url: URL): Promise<ProfileInfo | null> {
   const pathSegments = url.pathname.split("/").filter(Boolean);
   if (pathSegments.length === 0) return null;
 
-  // ignore profile routes that are not user profiles (e.g., /explore, /reels, /direct, /stories, /p/, /accounts)
+  // Ignore reserved non-profile routes
   const reserved = ["explore", "reels", "direct", "stories", "p", "accounts"];
   if (reserved.includes(pathSegments[0])) return null;
 
   const username = pathSegments[0];
   let displayName = username;
 
-  // Try extracting from og:title tag first
+  // 1. Preserve any leading notification badges (e.g., "(1) ")
+  const badgeMatch = document.title.match(/^(\(\d+\+?\))\s*/);
+  const badgePrefix = badgeMatch ? `${badgeMatch[1]} ` : "";
+
+  // 2. Try extracting from og:title tag first
   const ogTitle =
     document
       .querySelector('meta[property="og:title"]')
       ?.getAttribute("content") || "";
 
-  if (ogTitle && ogTitle.includes("(@")) {
-    const match = ogTitle.match(/^(.*?)\s*\(@/);
-    if (match && match[1]) {
-      displayName = match[1].trim();
-    }
-  } else {
-    // Fallback: Check document title or primary heading
-    const titleMatch = document.title.match(/^(.*?)\s*\(@/);
-    if (titleMatch && titleMatch[1]) {
-      displayName = titleMatch[1].trim();
-    } else {
-      // See if current page has a valid display name in the HTML title
-      displayName = (await getInstagramHtmlTitle()) || "";
-      if (!displayName) {
-        // Fallback: Try header elements inside the main profile layout
-        const h1Text = document
-          .querySelector("header h1, main h1")
-          ?.textContent?.trim();
-        if (h1Text && h1Text !== username) {
-          displayName = h1Text;
+  if (ogTitle) {
+    const tempUserName = extractUsername(ogTitle);
+    if (tempUserName && tempUserName == username) {
+      // If og:title starts with "(@", there is no custom display name
+      if (ogTitle.trim().startsWith("(@") || ogTitle.trim().startsWith("@")) {
+        displayName = username;
+      } else {
+        const match = ogTitle.match(/^(.*?)\s*\(@/);
+        if (match && match[1].trim()) {
+          displayName = match[1].trim();
         }
       }
     }
   }
 
-  // If displayName is still empty or matches the username, fall back to username
-  return { displayName: displayName || username, username, site: "Instagram" };
+  // 4. Fallback: Check header/h1 in the live DOM
+  if (displayName === username) {
+    // See if current page has a valid display name in the HTML title
+    const tempDisplayName = (await getInstagramHtmlTitle()) || "";
+    if (!tempDisplayName) {
+      const h1Text = document
+        .querySelector("header h1, main h1")
+        ?.textContent?.trim();
+      if (h1Text && h1Text !== username && !h1Text.startsWith("@")) {
+        displayName = h1Text;
+      }
+    } else {
+      displayName = tempDisplayName;
+    }
+  }
+
+  // 3. Fallback: Check document.title if displayName hasn't been extracted yet
+  if (displayName === username) {
+    const rawTitle = (document.title || "").replace(/^\(\d+\+?\)\s*/, "");
+    if (!rawTitle.startsWith("(@") && !rawTitle.startsWith("@")) {
+      const titleMatch = rawTitle.match(/^(.*?)\s*\(@/);
+      if (titleMatch && titleMatch[1].trim()) {
+        displayName = titleMatch[1].trim();
+      }
+    }
+  }
+
+  // 5. Final fallback cleanup
+  if (
+    !displayName ||
+    displayName.startsWith("(@") ||
+    displayName.startsWith("@")
+  ) {
+    displayName = username;
+  }
+
+  return {
+    displayName,
+    username,
+    site: "Instagram",
+    notificationBadge: badgePrefix,
+  };
 }
 
 async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
@@ -123,20 +157,20 @@ async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
 
   // Block any feed parameters in the query string
   if (url.searchParams.has("filter") || url.searchParams.has("sk")) {
-    console.log(
-      "Facebook feed route detected via query parameters. No profile info to parse.",
-    );
+    // console.log(
+    //   "Facebook feed route detected via query parameters. No profile info to parse.",
+    // );
     return null;
   }
 
   // Handle /profile.php?id=123456 vs /username routes
   let username = pathSegments[0];
   if (username === "profile.php") {
-    console.log(
-      "Facebook profile.php route detected. Extracting username from query params.",
-    );
+    // console.log(
+    //   "Facebook profile.php route detected. Extracting username from query params.",
+    // );
     username = url.searchParams.get("id") || "";
-    console.log(`Extracted username from profile.php: ${username}`);
+    // console.log(`Extracted username from profile.php: ${username}`);
     if (!username) return null;
   }
 
@@ -146,26 +180,26 @@ async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
   let displayName = "";
   const h1Element = document.querySelector("main h1, div[role='main'] h1");
   if (h1Element && h1Element.textContent) {
-    console.log(
-      "Extracted display name from H1 element:",
-      h1Element.textContent,
-    );
+    // console.log(
+    //   "Extracted display name from H1 element:",
+    //   h1Element.textContent,
+    // );
     displayName = h1Element.textContent.trim();
   }
 
   // Fallback to script tag extraction ONLY if H1 isn't available
   if (!displayName || displayName.toLowerCase() === "facebook") {
-    console.log(
-      "H1 element not found or invalid. Attempting to extract display name from script tags.",
-    );
+    // console.log(
+    //   "H1 element not found or invalid. Attempting to extract display name from script tags.",
+    // );
     displayName = getFacebookNameFromScripts() || "";
   }
 
   // Fallback to current document title
   if (!displayName) {
-    console.log(
-      "Script tag extraction failed. Attempting to extract display name from document.title.",
-    );
+    // console.log(
+    //   "Script tag extraction failed. Attempting to extract display name from document.title.",
+    // );
     // Strip leading notification badge (e.g., "(3) ") before splitting on delimiters
     const cleanTitle = rawTitle.replace(/^\(\d+\+?\)\s*/, "");
     displayName = cleanTitle.split("|")[0].split("-")[0].trim();
@@ -173,21 +207,21 @@ async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
 
   // If no valid name was found or it matches default branding, fall back to username
   if (!displayName || displayName.toLowerCase() === "facebook") {
-    console.log(
-      "No valid display name found. Falling back to using username as display name.",
-    );
+    // console.log(
+    //   "No valid display name found. Falling back to using username as display name.",
+    // );
     displayName = username;
   }
 
   if (displayName) {
-    console.log(
-      `Final display name determined: "${displayName}" for username: "${username}"`,
-    );
+    // console.log(
+    //   `Final display name determined: "${displayName}" for username: "${username}"`,
+    // );
   }
   if (badgePrefix) {
-    console.log(
-      `Notification badge detected: "${badgePrefix}" for username: "${username}"`,
-    );
+    // console.log(
+    //   `Notification badge detected: "${badgePrefix}" for username: "${username}"`,
+    // );
   }
 
   return {
@@ -246,14 +280,14 @@ function getFacebookNameFromScripts(): string | null {
     // if text contains the pattern "profile_owner", print 100 characters beginning with that pattern for debugging
     const profileOwnerIndex = text.indexOf('"profile_owner"');
     if (profileOwnerIndex !== -1) {
-      const snippet = text.substring(
-        profileOwnerIndex,
-        profileOwnerIndex + 100,
-      );
-      console.log(
-        "Found 'profile_owner' in script tag. Snippet for debugging:",
-        snippet,
-      );
+      // const snippet = text.substring(
+      //   profileOwnerIndex,
+      //   profileOwnerIndex + 100,
+      // );
+      // console.log(
+      //   "Found 'profile_owner' in script tag. Snippet for debugging:",
+      //   snippet,
+      // );
     }
 
     let match = text.match(
@@ -264,10 +298,10 @@ function getFacebookNameFromScripts(): string | null {
         /"__isProfile"\s*:\s*"User"\s*,[^}]*?"name"\s*:\s*"([^"]+)"/,
       );
     }
-    if (match) {
-      // print the matched name for debugging
-      console.log("Extracted display name from script tag:", match[1]);
-    }
+    // if (match) {
+    //   // print the matched name for debugging
+    //   console.log("Extracted display name from script tag:", match[1]);
+    // }
 
     if (match && match[1]) {
       let name = match[1];
@@ -309,4 +343,9 @@ async function getInstagramHtmlTitle(): Promise<string | null> {
     console.error("Failed to fetch raw server HTML:", error);
     return null;
   }
+}
+
+function extractUsername(title: string): string | null {
+  const match = title.match(/\(@([a-zA-Z0-9._]+)\)/);
+  return match ? match[1] : null;
 }
