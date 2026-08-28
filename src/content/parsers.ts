@@ -51,8 +51,7 @@ async function parseInstagram(url: URL): Promise<ProfileInfo | null> {
   let displayName = username;
 
   // 1. Preserve any leading notification badges (e.g., "(1) ")
-  const badgeMatch = document.title.match(/^(\(\d+\+?\))\s*/);
-  const badgePrefix = badgeMatch ? `${badgeMatch[1]} ` : "";
+  let badgePrefix = extractBadgeCount(document.title);
 
   // 2. Try extracting from og:title tag first
   const ogTitle =
@@ -61,6 +60,9 @@ async function parseInstagram(url: URL): Promise<ProfileInfo | null> {
       ?.getAttribute("content") || "";
 
   if (ogTitle) {
+    if (!badgePrefix) {
+      badgePrefix = extractBadgeCount(ogTitle);
+    }
     const tempUserName = extractUsername(ogTitle);
     if (tempUserName && tempUserName == username) {
       // If og:title starts with "(@", there is no custom display name
@@ -347,5 +349,11 @@ async function getInstagramHtmlTitle(): Promise<string | null> {
 
 function extractUsername(title: string): string | null {
   const match = title.match(/\(@([a-zA-Z0-9._]+)\)/);
+  return match ? match[1] : null;
+}
+
+function extractBadgeCount(title: string): string | null {
+  const tempTitle = title.trim();
+  let match = tempTitle.match(/(\(\d+\+?\)\s+)/);
   return match ? match[1] : null;
 }
