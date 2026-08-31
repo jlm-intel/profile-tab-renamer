@@ -37,5 +37,5 @@ export interface ProfileInfo {
 // {u} - username, e.g., "ykspod"
 // {s} - site, e.g., "Instagram"
 
-export const DEFAULT_TEMPLATE = "{d} ({u}) @ {s}"; // example: "Your Kickstarter Sucks (ykspod) @ Instagram"
+export const DEFAULT_TEMPLATE = "{d} (@{u}) - {s}"; // example: "Your Kickstarter Sucks (@ykspod) - Instagram"
 export const DEFAULT_ENABLE_FACEBOOK = false;
