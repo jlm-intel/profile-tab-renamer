@@ -50,10 +50,10 @@ async function parseInstagram(url: URL): Promise<ProfileInfo | null> {
   const username = pathSegments[0];
   let displayName = username;
 
-  // 1. Preserve any leading notification badges (e.g., "(1) ")
+  // Preserve any leading notification badges (e.g., "(1) ")
   let badgePrefix = extractBadgeCount(document.title);
 
-  // 2. Try extracting from og:title tag first
+  // Try extracting from og:title tag first
   const ogTitle =
     document
       .querySelector('meta[property="og:title"]')
@@ -77,7 +77,7 @@ async function parseInstagram(url: URL): Promise<ProfileInfo | null> {
     }
   }
 
-  // 4. Fallback: Check header/h1 in the live DOM
+  // Fallback: Check header/h1 in the live DOM
   if (displayName === username) {
     // See if current page has a valid display name in the HTML title
     const tempDisplayName = (await getInstagramHtmlTitle()) || "";
@@ -93,7 +93,7 @@ async function parseInstagram(url: URL): Promise<ProfileInfo | null> {
     }
   }
 
-  // 3. Fallback: Check document.title if displayName hasn't been extracted yet
+  // Fallback: Check document.title if displayName hasn't been extracted yet
   if (displayName === username) {
     const rawTitle = (document.title || "").replace(/^\(\d+\+?\)\s*/, "");
     if (!rawTitle.startsWith("(@") && !rawTitle.startsWith("@")) {
@@ -104,7 +104,7 @@ async function parseInstagram(url: URL): Promise<ProfileInfo | null> {
     }
   }
 
-  // 5. Final fallback cleanup
+  // Final fallback cleanup
   if (
     !displayName ||
     displayName.startsWith("(@") ||
@@ -125,12 +125,12 @@ async function parseFacebook(url: URL): Promise<ProfileInfo | null> {
   const pathname = url.pathname.toLowerCase(); // example: /ultimateoutsider/
   const pathSegments = pathname.split("/").filter(Boolean); // example: ['ultimateoutsider']
 
-  // 1. Root page checks (e.g., https://www.facebook.com/)
+  // Root page checks (e.g., https://www.facebook.com/)
   if (pathSegments.length === 0) {
     return null;
   }
 
-  // 2. Explicitly block feed routes and top-level Meta pages
+  // Explicitly block feed routes and top-level Meta pages
   const reserved = [
     "friends",
     "watch",
@@ -240,14 +240,14 @@ async function parseThreads(url: URL): Promise<ProfileInfo | null> {
     return null;
   }
 
-  // 1. Extract username directly from path
+  // Extract username directly from path
   const username = pathSegments[0].replace("@", "");
 
-  // 2. Preserve notification badge if present
+  // Preserve notification badge if present
   const badgeMatch = document.title.match(/^(\(\d+\+?\))\s*/);
   const badgePrefix = badgeMatch ? `${badgeMatch[1]} ` : "";
 
-  // 3. Get text from the last H1 element in the DOM
+  // Get text from the last H1 element in the DOM
   const h1Elements = document.querySelectorAll("h1");
   let rawDisplayName = "";
 
@@ -347,11 +347,13 @@ async function getInstagramHtmlTitle(): Promise<string | null> {
   }
 }
 
+// gets a Meta username from a string like "Your Kickstarter Sucks (@ykspod) - Instagram"
 function extractUsername(title: string): string | null {
   const match = title.match(/\(@([a-zA-Z0-9._]+)\)/);
   return match ? match[1] : null;
 }
 
+// extracts a notification badge from a string like "(3) Your Kickstarter Sucks (@ykspod) - Instagram"
 function extractBadgeCount(title: string): string | null {
   const tempTitle = title.trim();
   let match = tempTitle.match(/(\(\d+\+?\)\s+)/);
